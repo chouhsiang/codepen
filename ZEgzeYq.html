@@ -19,7 +19,7 @@
     <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
 
 
-  <title>CodePen - 政府憑證 CAdES 數位簽章產生工具</title>
+  <title>CodePen - 產生 CAdES 數位簽章</title>
 
     <link rel="canonical" href="https://codepen.io/chouhsiang/pen/ZEgzeYq">
   
@@ -37,7 +37,7 @@
 
 <body translate="no">
   <div class="container">
-  <h1 class="text-center mb-3">政府憑證 CAdES 數位簽章產生工具</h1>
+  <h1 class="text-center mb-3">產生 CAdES 數位簽章</h1>
   <div>
     <p class="text-center">以自然人憑證為檔案做離線的 CAdES (<a href="https://datatracker.ietf.org/doc/html/rfc5126" target="_blank">RFC 5126</a>) 數位簽章，輸出 <a href="https://datatracker.ietf.org/doc/html/rfc5126#appendix-F.2.1" target="_blank">p7m</a> 或 <a href="https://datatracker.ietf.org/doc/html/rfc5126#appendix-F.2.2" target="_blank">p7s</a> 封裝格式，透過 openssl 進行驗簽</p>
     <p class="text-center">p7m 封裝格式內包含原始檔案與數位簽章，p7s 封裝格式僅包含數位簽章不包含原始檔案</p>
@@ -100,15 +100,6 @@
     </div>
     <hr>
   </div>
-
-  <h2>驗簽方法</h2>
-  <p>p7s (DER)：<br>openssl smime -verify -inform DER -in &lt;p7s檔&gt; -content &lt;原始檔&gt; -noverify | grep Verification</p>
-  <p>p7s (PEM)：<br>openssl smime -verify -inform PEM -in &lt;p7s檔&gt; -content &lt;原始檔&gt; -noverify | grep Verification</p>
-  <p>p7m (DER)：<br>openssl smime -verify -inform DER -in &lt;p7m檔&gt; -noverify | grep Verification</p>
-  <p>p7m (PEM)：<br>openssl smime -verify -inform PEM -in &lt;p7m檔&gt; -noverify | grep Verification</p>
-  <hr>
-
-  </p>
 </div>
 
 <link href="https://chouhsiang.github.io/gpki-tool-website/navbar.css" rel="stylesheet">
