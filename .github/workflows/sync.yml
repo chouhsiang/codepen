@@ -14,23 +14,11 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    - name: Checkout to latest commit 
-      run: |
-        git fetch --all
-        git reset --hard origin/main
     - name: Download file from codepen
-      run: |
-        ./download.sh
-    - name: Commit and push changes
-      run: |
-        git config --global user.name 'github-actions'
-        git config --global user.email 'actions@github.com'
-        git add .
-        if ! git diff-index --quiet HEAD; then
-          git commit -m 'Add new file'
-          git push
-        else
-          echo "No changes to commit."
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: ./download.sh
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./public
+        destination_branch: gh-pages
