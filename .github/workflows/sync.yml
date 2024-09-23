@@ -19,7 +19,7 @@ jobs:
     - name: Prettier html
       run: |
         npm install -g prettier
-        cd pulbic
+        cd public
         prettier --write --print-width 1000 *.html
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
