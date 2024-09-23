@@ -1,5 +1,4 @@
-name: Daily File
-
+name: Download CodePen
 on:
   workflow_dispatch:
   push:
