@@ -8,5 +8,3 @@ while read -r line; do
     echo "$line download failed"
   fi
 done < "list.txt"
-cd pulbic
-prettier --write --print-width 1000 *.html
