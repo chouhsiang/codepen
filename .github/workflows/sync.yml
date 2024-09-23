@@ -16,6 +16,11 @@ jobs:
       uses: actions/checkout@v3
     - name: Download file from codepen
       run: ./download.sh
+    - name: Prettier html
+      run: |
+        npm install -g prettier
+        cd pulbic
+        prettier --write --print-width 1000 *.html
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
