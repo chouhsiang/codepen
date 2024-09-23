@@ -11,7 +11,7 @@
 
     <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />
 
-    <title>CodePen - 政府憑證卡驗證 CAdES 數位簽章</title>
+    <title>CodePen - 驗證 CAdES 數位簽章 | 自然人憑證應用工具</title>
 
     <link rel="canonical" href="https://codepen.io/chouhsiang/pen/eYqOVVz" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -28,14 +28,14 @@
     <main class="container">
       <nav style="--bs-breadcrumb-divider: &quot;>&quot;" aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item">政府憑證應用工具</li>
+          <li class="breadcrumb-item">自然人憑證應用工具</li>
           <li class="breadcrumb-item">數位簽章工具</li>
           <li class="breadcrumb-item active" aria-current="page">驗證 CAdES 數位簽章</li>
         </ol>
       </nav>
-      <h1 class="text-center mb-3">政府憑證卡驗證 CAdES 數位簽章</h1>
+      <h1 class="text-center mb-3">驗證 CAdES 數位簽章 | 自然人憑證應用工具</h1>
 
-      <p>可以透過 OpenSSL 進行驗證，網頁版驗簽待補</p>
+      <p>可以透過 OpenSSL 進行驗證，網頁版驗簽開發中</p>
 
       <h2>驗簽方法</h2>
       <p>p7s (DER)：<br />openssl smime -verify -inform DER -in &lt;p7s檔&gt; -content &lt;原始檔&gt; -noverify | grep Verification</p>
@@ -43,6 +43,34 @@
       <p>p7m (DER)：<br />openssl smime -verify -inform DER -in &lt;p7m檔&gt; -noverify | grep Verification</p>
       <p>p7m (PEM)：<br />openssl smime -verify -inform PEM -in &lt;p7m檔&gt; -noverify | grep Verification</p>
       <p>更多 OpenSSL 說明參考<a href="https://medium.com/chouhsiang/c94026fe5532" target="_blank">周詳程式筆記</a></p>
+      <hr />
+      <div class="mb-3 d-none">
+        <label for="p7File">數位簽章 (P7S 或 P7M)</label>
+        <input type="file" class="form-control" id="p7File" />
+      </div>
+      <div class="mb-3 d-none">
+        <label for="tbsFile">原始檔案 (P7M 不需要)</label>
+        <input type="file" class="form-control" id="tbsFile" />
+      </div>
+      <div class="d-grid d-none">
+        <button class="btn btn-lg btn-primary" id="submit" type="button">驗證數位簽章</button>
+      </div>
+      <hr />
+      <div id="div-sig" class="d-none">
+        <h2>驗證簽章結果</h2>
+        <>
+        <p>Hash 值比對：</p>
+        <p></p>
+        <p>憑證鏈驗證：</p>
+        <p>憑證未過期：</p>
+        <p>憑證未廢止：</p>
+        <div class="mb-3">
+          <label for="cert">憑證</label>
+          <input type="file" class="form-control mb-2" id="cert" />
+          <button type="button" id="dl_cert_der" class="btn btn-primary">下載憑證 (DER格式)</button>
+          <button type="button" id="dl_cert_pem" class="btn btn-primary">下載憑證 (PEM格式)</button>
+        </div>
+      </div>
     </main>
     <script src="https://chouhsiang.github.io/gpki-tool-website/navbar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

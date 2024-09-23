@@ -13,7 +13,7 @@
 
     <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
 
-    <title>CodePen - 政府憑證卡產生 CAdES 數位簽章</title>
+    <title>CodePen - 產生 CAdES 數位簽章 | 自然人憑證應用工具</title>
 
     <link rel="canonical" href="https://codepen.io/chouhsiang/pen/ZEgzeYq" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -30,12 +30,12 @@
     <main class="container">
       <nav style="--bs-breadcrumb-divider: &quot;>&quot;" aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item">政府憑證應用工具</li>
+          <li class="breadcrumb-item">自然人憑證應用工具</li>
           <li class="breadcrumb-item">數位簽章工具</li>
           <li class="breadcrumb-item active" aria-current="page">產生 CAdES 數位簽章</li>
         </ol>
       </nav>
-      <h1 class="text-center mb-3">政府憑證卡產生 CAdES 數位簽章</h1>
+      <h1 class="text-center mb-3">產生 CAdES 數位簽章 | 自然人憑證應用工具</h1>
 
       <div>
         <p class="text-center">以自然人憑證為檔案做離線的 CAdES (<a href="https://datatracker.ietf.org/doc/html/rfc5126" target="_blank">RFC 5126</a>) 數位簽章，輸出 <a href="https://datatracker.ietf.org/doc/html/rfc5126#appendix-F.2.1" target="_blank">p7m</a> 或 <a href="https://datatracker.ietf.org/doc/html/rfc5126#appendix-F.2.2" target="_blank">p7s</a> 封裝格式，透過 openssl 進行驗簽</p>
@@ -85,16 +85,16 @@
           <textarea id="info" class="form-control d-none" rows="2"></textarea>
         </div>
         <div class="mb-3">
-          <label for="p7s">p7s</label>
+          <label for="p7s">數位簽章 P7S (包含簽章、憑證)</label>
           <textarea id="p7s" class="form-control mb-2" rows="3"></textarea>
-          <button type="button" id="dl_p7s_der" class="btn btn-primary">下載 p7s (DER)</button>
-          <button type="button" id="dl_p7s_pem" class="btn btn-primary">下載 p7s (PEM)</button>
+          <button type="button" id="dl_p7s_der" class="btn btn-primary">下載P7S (DER格式)</button>
+          <button type="button" id="dl_p7s_pem" class="btn btn-primary">下載P7S (PEM格式)</button>
         </div>
         <div class="mb-3">
-          <label for="p7m">p7m</label>
+          <label for="p7m">數位簽章 P7M (包含簽章、憑證、原始檔案)</label>
           <textarea id="p7m" class="form-control mb-2" rows="3"></textarea>
-          <button type="button" id="dl_p7m_der" class="btn btn-primary">下載 p7m (DER)</button>
-          <button type="button" id="dl_p7m_pem" class="btn btn-primary">下載 p7m (PEM)</button>
+          <button type="button" id="dl_p7m_der" class="btn btn-primary">下載P7M (DER格式)</button>
+          <button type="button" id="dl_p7m_pem" class="btn btn-primary">下載P7M (PEM格式)</button>
         </div>
         <hr />
       </div>
@@ -182,6 +182,17 @@
               new asn1js.Set({
                 value: [
                   new asn1js.ObjectIdentifier({ value: "1.2.840.113549.1.7.1" }), // data (PKCS #7)
+                ],
+              }),
+            ],
+          }),
+
+          new asn1js.Sequence({
+            value: [
+              new asn1js.ObjectIdentifier({ value: "1.2.840.113549.1.9.5" }), // signingTime (PKCS #9)
+              new asn1js.Set({
+                value: [
+                  new asn1js.UTCTime({ valueDate: new Date() }), // UTC Time value
                 ],
               }),
             ],
@@ -405,7 +416,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename + "_der.p7s";
+        a.download = filename + ".p7s";
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -419,7 +430,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename + "_pem.p7s";
+        a.download = filename + ".p7s";
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -434,7 +445,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename + "_der.p7m";
+        a.download = filename + ".p7m";
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -448,7 +459,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename + "_pem.p7m";
+        a.download = filename + ".p7m";
         a.click();
         URL.revokeObjectURL(url);
       }
