@@ -11,6 +11,8 @@
 
     <link rel="mask-icon" type="image/x-icon" href="https://cpwebassets.codepen.io/assets/favicon/logo-pin-b4b4269c16397ad2f0f7a01bcdf513a1994f4c94b8af2f191c09eb0d601762b1.svg" color="#111" />
 
+    <script src="https://cpwebassets.codepen.io/assets/common/stopExecutionOnTimeout-2c7831bb44f98c1391d6a4ffda0e1fd302503391ca806e7fcc7b9b87197aec26.js"></script>
+
     <title>CodePen - 驗證 CAdES 數位簽章 | 自然人憑證應用工具</title>
 
     <link rel="canonical" href="https://codepen.io/chouhsiang/pen/eYqOVVz" />
@@ -44,29 +46,36 @@
       <p>p7m (PEM)：<br />openssl smime -verify -inform PEM -in &lt;p7m檔&gt; -noverify | grep Verification</p>
       <p>更多 OpenSSL 說明參考<a href="https://medium.com/chouhsiang/c94026fe5532" target="_blank">周詳程式筆記</a></p>
       <hr />
-      <div class="mb-3 d-none">
+      <div class="mb-3">
         <label for="p7File">數位簽章 (P7S 或 P7M)</label>
         <input type="file" class="form-control" id="p7File" />
       </div>
-      <div class="mb-3 d-none">
+      <div class="mb-3">
         <label for="tbsFile">原始檔案 (P7M 不需要)</label>
         <input type="file" class="form-control" id="tbsFile" />
       </div>
-      <div class="d-grid d-none">
+      <div class="d-grid">
         <button class="btn btn-lg btn-primary" id="submit" type="button">驗證數位簽章</button>
       </div>
       <hr />
-      <div id="div-sig" class="d-none">
+      <div id="div-sig" class="">
         <h2>驗證簽章結果</h2>
-        <>
-        <p>Hash 值比對：</p>
-        <p></p>
-        <p>憑證鏈驗證：</p>
-        <p>憑證未過期：</p>
+        <p>驗證結果：✅</p>
+        <h3>簽章驗證</h3>
+        <p>檔案 Hash 比對：✅</p>
+        <p>簽章驗證：</p>
+        <p>憑證信任鏈：</p>
+        <p>憑證有效期：</p>
         <p>憑證未廢止：</p>
+        <h2>簽章資訊</h2>
+        <p>Hash 演算法 (DigestAlgorithm)：<span id="hashAlgo"></span></p>
+        <p>Hash 值 (MessageDigest)：<span id="hashValue"></span></p>
+        <p>原始檔案 Hash 值 (P7M 為裡面的檔案、P7S 為上傳的檔案)：<span id="hashValue2"></span></p>
+        <p>簽章時間：</p>
+        <h3>憑證資訊</h3>
         <div class="mb-3">
-          <label for="cert">憑證</label>
-          <input type="file" class="form-control mb-2" id="cert" />
+          <label for="cert">憑證內容</label>
+          <textarea id="p7m" class="form-control mb-2" rows="3"></textarea>
           <button type="button" id="dl_cert_der" class="btn btn-primary">下載憑證 (DER格式)</button>
           <button type="button" id="dl_cert_pem" class="btn btn-primary">下載憑證 (PEM格式)</button>
         </div>
@@ -74,5 +83,182 @@
     </main>
     <script src="https://chouhsiang.github.io/gpki-tool-website/navbar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script id="rendered-js" type="module">
+      import forge from "https://esm.sh/node-forge";
+
+      async function submit() {
+        const p7File = document.getElementById("p7File").files[0];
+        if (!p7File) {
+          alert("請選擇檔案");
+          return;
+        }
+
+        // 載入 PKCS7
+        let pkcs7, hashAlgo;
+        try {
+          const p7FileBuffer = await p7File.arrayBuffer();
+          const p7FileArray = new Uint8Array(p7FileBuffer);
+          const fileContent = new TextDecoder("utf-8").decode(p7FileArray);
+          const p7FileType = fileContent.includes("-----BEGIN") ? "PEM" : "DER";
+          if (p7FileType == "PEM") {
+            pkcs7 = forge.pkcs7.messageFromPem(fileContent);
+          } else {
+            const byteBuffer = forge.util.createBuffer(p7FileBuffer);
+            const p7Asn1 = forge.asn1.fromDer(byteBuffer);
+            pkcs7 = forge.pkcs7.messageFromAsn1(p7Asn1);
+          }
+          pkcs7 = p7FixError(pkcs7);
+          console.log(pkcs7);
+        } catch (e) {
+          alert("數位簽章無法解析");
+        }
+
+        // 取得 Hash 演算法
+        try {
+          const hashAlgoList = {
+            "1.3.14.3.2.26": "SHA1",
+            "2.16.840.1.101.3.4.2.1": "SHA256",
+            "2.16.840.1.101.3.4.2.2": "SHA384",
+            "2.16.840.1.101.3.4.2.3": "SHA512",
+          };
+
+          const hashAlgoStr = pkcs7.rawCapture.digestAlgorithm;
+          hashAlgo = hashAlgoList[hashAlgoStr];
+
+          if (hashAlgo == undefined) {
+            alert("Hash 演算法無法識別");
+            return;
+          }
+          document.getElementById("hashAlgo").innerText = hashAlgo;
+        } catch (e) {
+          alert("Hash 演算法取得失敗");
+        }
+        // 取得 Hash 值
+        try {
+          const attrs = pkcs7.rawCapture.authenticatedAttributes;
+          const findHash = attrs.find((i) => i.value[0].value == "1.2.840.113549.1.9.4");
+
+          const hashValue = findHash ? findHash.value[1].value[0].value : null;
+          document.getElementById("hashValue").innerText = strToHex(hashValue);
+        } catch (e) {
+          alert("Hash 值取得失敗");
+        }
+        // 計算 Hash 值
+        try {
+          const content = pkcs7.rawCapture.content.value[0].value;
+          console.log(hashAlgo);
+          let md;
+          if (hashAlgo == "SHA256") {
+            md = forge.md.sha256.create();
+          } else if (hashAlgo == "SHA384") {
+            md = forge.md.sha384.create();
+          } else if (hashAlgo == "SHA512") {
+            md = forge.md.sha512.create();
+          } else if (hashAlgo == "SHA1") {
+            md = forge.md.sha1.create();
+          }
+          md.update(content);
+          const hashCode = md.digest().toHex();
+          document.getElementById("hashValue2").textContent = hashCode;
+        } catch (e) {
+          console.log(e);
+          alert("Hash 值計算失敗");
+        }
+        return;
+
+        try {
+          // 從 certb64 提取公鑰
+          const begin = "-----BEGIN PKCS7-----";
+          const end = "-----END PKCS7-----";
+          const pkcs7Pem = begin + document.getElementById("pkcs7").value + end;
+          const pkcs7 = forge.pkcs7.messageFromPem(pkcs7Pem);
+
+          // 取得待簽資訊
+          const attr = pkcs7.rawCapture.authenticatedAttributes;
+          const attrAsn1 = forge.asn1.create(forge.asn1.Class.UNIVERSAL, forge.asn1.Type.SET, true, attr);
+
+          const attrDer = forge.asn1.toDer(attrAsn1).data;
+          console.log(btoa(attrDer));
+
+          // 取得簽章值、公鑰
+          const sig = pkcs7.rawCapture.signature;
+          const publicKey = pkcs7.certificates[0].publicKey;
+
+          // 取得 Hash 演算法的 OID
+          const hashAlgoStr = pkcs7.rawCapture.digestAlgorithm;
+          const hashAlgoOid = hexToOid(hashAlgoStr);
+
+          // Hash 待簽資訊
+          let md = forge.md.sha1.create();
+          if (hashAlgoOid == "2.16.840.1.101.3.4.2.1") {
+            md = forge.md.sha256.create();
+          } else if (hashAlgoOid == "2.16.840.1.101.3.4.2.2") {
+            md = forge.md.sha384.create();
+          } else if (hashAlgoOid == "2.16.840.1.101.3.4.2.3") {
+            md = forge.md.sha512.create();
+          }
+          md.update(attrDer);
+          const hashCodeBytes = md.digest().getBytes();
+
+          // 驗證
+          const verified = publicKey.verify(hashCodeBytes, sig);
+          document.getElementById("result").innerHTML = verified ? "PKCS7 驗簽成功" : "PKCS7 驗簽失敗";
+        } catch (e) {
+          document.getElementById("result").innerHTML = e;
+        }
+      }
+      document.getElementById("submit").addEventListener("click", submit);
+
+      function hexToOid(str) {
+        const bytes = Array.from(str, (c) => c.charCodeAt(0));
+        const oid = [Math.floor(bytes[0] / 40), bytes[0] % 40];
+        let t = 0;
+        for (let i = 1; i < bytes.length; i++) {
+          if (window.CP.shouldStopExecution(0)) break;
+          if (bytes[i] >= 128) {
+            t = (t << 7) + (bytes[i] - 128);
+          } else {
+            oid.push((t << 7) + bytes[i]);
+            t = 0;
+          }
+        }
+        window.CP.exitedLoop(0);
+        return oid.join(".");
+      }
+
+      function strToHex(str) {
+        let hex = "";
+        for (let i = 0; i < str.length; i++) {
+          if (window.CP.shouldStopExecution(1)) break;
+          hex += str.charCodeAt(i).toString(16).padStart(2, "0");
+        }
+        window.CP.exitedLoop(1);
+        return hex;
+      }
+
+      function p7FixError(obj) {
+        if (typeof obj === "object" && obj !== null) {
+          for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+              obj[key] = p7FixError(obj[key]);
+            }
+          }
+          return obj;
+        } else if (typeof obj === "string") {
+          const bytes = Array.from(obj, (c) => c.charCodeAt(0));
+          if (bytes[0] == 42 || bytes[0] == 96) {
+            // 解決OID亂碼問題
+            return hexToOid(obj);
+          } /*else {
+    // 解決中文亂碼問題
+    //const textDecoder = new TextDecoder("utf-8");
+    //const byteArray = new Uint8Array([...obj].map((c) => c.charCodeAt(0)));
+    //return textDecoder.decode(byteArray);
+    }*/
+        }
+        return obj;
+      }
+      //# sourceURL=pen.js
+    </script>
   </body>
 </html>
